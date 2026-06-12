@@ -6,6 +6,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {colorPalette} from "./constants/color";
 import {useAuthContext} from "./context/AuthContext";
 import HomeScreen from "./screens/signedIn/HomeScreen";
+import SmartHydrationScreen from "./screens/signedIn/SmartHydrationScreen";
 import SettingsScreen from "./screens/signedIn/SettingsScreen";
 import SignInScreen from "./screens/preSignedIn/SignInScreen";
 import SignUpScreen from "./screens/preSignedIn/SignUpScreen";
@@ -56,6 +57,21 @@ export default function AppNavigationContext() {
         );
     }
 
+    const HomeStackScreen = () => {
+        return (
+            <Stack.Navigator>
+                <Stack.Screen name="Home" component={HomeScreen}
+                              options={{
+                                  headerShown: false,
+                              }}/>
+                <Stack.Screen name="smartHydration" component={SmartHydrationScreen}
+                              options={{
+                                  headerShown: false,
+                              }}/>
+            </Stack.Navigator>
+        );
+    }
+
     return (
         <NavigationContainer>
             {state.user ?
@@ -66,7 +82,7 @@ export default function AppNavigationContext() {
                                         headerShown: false,
                                         tabBarShowLabel: false,
                                     }}/>
-                        <Tab.Screen name="home" component={HomeScreen}
+                        <Tab.Screen name="home" component={HomeStackScreen}
                                     options={{
                                         headerShown: false,
                                         tabBarShowLabel: false,

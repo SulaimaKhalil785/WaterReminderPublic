@@ -16,8 +16,8 @@ const SettingsScreen = () => {
     const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
-        fetchWaterGoal(dispatch, authState.user);
-    }, []);
+        fetchWaterGoal(dispatch, authState.user?.uid);
+    }, [authState.user?.uid, dispatch]);
 
     const submitWaterGoal = () => {
         setModalVisible(false);

@@ -3,24 +3,45 @@ import {auth} from "../../firebaseConfig";
 import {storeData} from "./StorageHelper";
 import {authActions} from "../constants/authActions";
 
+const getPremiumStatus = async (user) => {
+    const tokenResult = await user.getIdTokenResult();
+    const claims = tokenResult?.claims || user?.customClaims || {};
+
+    return Boolean(
+        claims?.isPremium ||
+        claims?.premium ||
+        claims?.subscription === 'premium'
+    );
+};
+
+const dispatchAuthUser = async (dispatch, action, user) => {
+    const userData = {
+        uid: user.uid,
+        isPremiumUser: await getPremiumStatus(user)
+    };
+
+    await storeData('uid', userData.uid);
+    await storeData('isPremiumUser', String(userData.isPremiumUser));
+    dispatch(action(userData));
+};
+
 export const onAuthStateChanged = (dispatch) => {
     auth.onAuthStateChanged((user) => {
         if (user) {
-            const uid = user.uid;
-            storeData('uid', uid).then(() => {
-                dispatch(authActions.onAuthStateChange(uid));
-            });
+            dispatchAuthUser(dispatch, authActions.onAuthStateChange, user);
         } else {
-            dispatch(authActions.signOut());
+            storeData('uid', '').then(() => {
+                storeData('isPremiumUser', 'false').then(() => {
+                    dispatch(authActions.signOut());
+                });
+            });
         }
     });
 }
 
 export const signIn = (dispatch, email, password) => {
     signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
-        storeData('uid', userCredential.user.uid).then(() => {
-            dispatch(authActions.signIn(userCredential.user.uid));
-        });
+        dispatchAuthUser(dispatch, authActions.signIn, userCredential.user);
     }).catch((err) => {
         dispatch(authActions.throwError(err.message));
     });
@@ -28,9 +49,7 @@ export const signIn = (dispatch, email, password) => {
 
 export const signUp = (dispatch, email, password) => {
     createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-        storeData('uid', userCredential.user.uid).then(() => {
-            dispatch(authActions.signUp(userCredential.user.uid));
-        });
+        dispatchAuthUser(dispatch, authActions.signUp, userCredential.user);
     }).catch((err) => {
         dispatch(authActions.throwError(err.message));
     });

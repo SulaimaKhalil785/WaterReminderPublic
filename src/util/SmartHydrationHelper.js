@@ -15,9 +15,14 @@ import { saveWaterGoal } from './FirebaseHelper';
  * @param {Function} weatherDispatch - Weather context dispatch
  * @param {number} currentGoal - User's current daily water goal in ml
  * @param {Object} options - Optional settings
- * @param {boolean} options.forceRefresh - Skip staleness check and always fetch
+ * @param {boolean=} options.forceRefresh - Skip staleness check and always fetch
+ * @param {boolean=} options.isPremiumUser - Whether the current user can access Smart Hydration
  */
 export const fetchAndUpdateSmartHydration = async (weatherDispatch, currentGoal, options = {}) => {
+    if (!options.isPremiumUser) {
+        return;
+    }
+
     weatherDispatch(weatherActions.fetchWeatherStart());
 
     try {
@@ -37,11 +42,17 @@ export const fetchAndUpdateSmartHydration = async (weatherDispatch, currentGoal,
  * @param {Object} weatherState - Current weather context state
  * @param {Function} weatherDispatch - Weather context dispatch
  * @param {number} currentGoal - User's current daily water goal in ml
+ * @param {Object} options - Optional settings
+ * @param {boolean=} options.isPremiumUser - Whether the current user can access Smart Hydration
  */
-export const refreshSmartHydrationIfNeeded = (weatherState, weatherDispatch, currentGoal) => {
+export const refreshSmartHydrationIfNeeded = (weatherState, weatherDispatch, currentGoal, options = {}) => {
+    if (!options.isPremiumUser) {
+        return;
+    }
+
     const isStale = !weatherState.weatherData || isWeatherDataStale(weatherState.lastUpdated);
     if (isStale && !weatherState.isLoading) {
-        fetchAndUpdateSmartHydration(weatherDispatch, currentGoal);
+        fetchAndUpdateSmartHydration(weatherDispatch, currentGoal, options);
     } else if (weatherState.weatherData && currentGoal) {
         const recommendation = calculateHydrationRecommendation(weatherState.weatherData, currentGoal);
         weatherDispatch(weatherActions.updateRecommendation(recommendation));
@@ -63,11 +74,9 @@ export const acceptHydrationRecommendation = async (recommendation, firebaseDisp
     await saveWaterGoal(firebaseDispatch, userId, recommendation.recommendedIntake);
     weatherDispatch(weatherActions.acceptRecommendation(recommendation));
 
-    try {
-        await scheduleHydrationReminders(recommendation.reminderFrequency);
-    } catch (error) {
+    scheduleHydrationReminders(recommendation.reminderFrequency).catch((error) => {
         console.warn('Reminder scheduling failed, goal was still updated:', error);
-    }
+    });
 };
 
 /**

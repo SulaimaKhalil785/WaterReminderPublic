@@ -10,7 +10,29 @@ const SmartHydrationSummaryCard = ({
     isLoading,
     error,
     onPress,
+    isPremium = false,
 }) => {
+    const renderLockedCard = () => (
+        <View style={smartHydrationSummaryStyle.card}>
+            <View style={smartHydrationSummaryStyle.cardInfo}>
+                <View style={smartHydrationSummaryStyle.titleRow}>
+                    <Entypo name="lock" size={20} color={colorPalette.background} />
+                    <Text style={smartHydrationSummaryStyle.title}>Smart Hydration</Text>
+                    <View style={smartHydrationSummaryStyle.premiumBadge}>
+                        <Text style={smartHydrationSummaryStyle.premiumText}>PREMIUM</Text>
+                    </View>
+                </View>
+                <Text style={smartHydrationSummaryStyle.subtitle}>
+                    Upgrade to Premium to unlock weather-based recommendations.
+                </Text>
+            </View>
+            <Entypo name="lock" size={24} color={colorPalette.background} />
+        </View>
+    );
+
+    if (!isPremium) {
+        return renderLockedCard();
+    }
     if (isLoading) {
         return (
             <View style={[smartHydrationSummaryStyle.card, smartHydrationSummaryStyle.loadingCard]}>

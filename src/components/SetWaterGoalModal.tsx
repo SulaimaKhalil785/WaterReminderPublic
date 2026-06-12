@@ -20,7 +20,7 @@ const SetWaterGoalModal = ({oldWaterGoal, modalVisible, action}) => {
             alert("Must input numbers");
             return false;
         } else {
-            saveWaterGoal(dispatch, authState.user, waterGoal);
+            saveWaterGoal(dispatch, authState.user?.uid, waterGoal);
             action();
         }
     }

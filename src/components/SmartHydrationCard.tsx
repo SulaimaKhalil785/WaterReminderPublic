@@ -30,8 +30,7 @@ const SmartHydrationCard = ({
     error,
     onAccept,
     onDismiss,
-    onRetry,
-    isMocked = false
+    onRetry
 }) => {
     if (isLoading) {
         return (
@@ -158,15 +157,6 @@ const SmartHydrationCard = ({
                             • {tip}
                         </Text>
                     ))}
-                </View>
-            )}
-
-            {/* Mock data warning */}
-            {isMocked && (
-                <View style={styles.mockWarning}>
-                    <Text style={styles.mockText}>
-                        ⓘ Using mock data. Configure your Weather API key for real weather data.
-                    </Text>
                 </View>
             )}
 
@@ -361,20 +351,6 @@ const styles = StyleSheet.create({
         lineHeight: 16
     },
     
-    mockWarning: {
-        backgroundColor: '#E3F2FD',
-        borderLeftWidth: 3,
-        borderLeftColor: '#2196F3',
-        padding: 12,
-        marginBottom: 16,
-        borderRadius: 6
-    },
-    
-    mockText: {
-        fontSize: 12,
-        color: '#1976D2',
-        fontStyle: 'italic'
-    },
     
     buttonContainer: {
         flexDirection: 'row',

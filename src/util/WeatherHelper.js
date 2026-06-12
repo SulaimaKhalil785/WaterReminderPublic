@@ -10,7 +10,6 @@
  * 2. Add weatherApiKey to app.json under expo.extra
  * 3. Or set WEATHER_API_KEY in your environment
  * 
- * Without an API key, mock data is used for development.
  */
 
 import Constants from 'expo-constants';
@@ -19,6 +18,7 @@ import { Platform } from 'react-native';
 
 const OPENWEATHER_API_KEY =
     Constants.expoConfig?.extra?.weatherApiKey ||
+    process.env.EXPO_PUBLIC_WEATHER_API_KEY ||
     process.env.WEATHER_API_KEY ||
     '';
 const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
@@ -33,8 +33,7 @@ const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 export const fetchWeatherByCoordinates = async (latitude, longitude) => {
     try {
         if (!OPENWEATHER_API_KEY) {
-            console.warn('Weather API key not configured. Using mock data.');
-            return getMockWeatherData();
+            throw new Error('Weather API key not configured. Please add your API key to app.json.');
         }
 
         const url = `${OPENWEATHER_BASE_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${OPENWEATHER_API_KEY}`;
@@ -70,8 +69,7 @@ export const fetchWeatherByCoordinates = async (latitude, longitude) => {
 export const fetchWeatherByCity = async (cityName) => {
     try {
         if (!OPENWEATHER_API_KEY) {
-            console.warn('Weather API key not configured. Using mock data.');
-            return getMockWeatherData();
+            throw new Error('Weather API key not configured. Please add your API key to app.json.');
         }
 
         const url = `${OPENWEATHER_BASE_URL}?q=${cityName}&units=metric&appid=${OPENWEATHER_API_KEY}`;
@@ -160,31 +158,6 @@ export const fetchWeatherForCurrentLocation = async () => {
         console.error('Error fetching weather for current location:', error);
         throw error;
     }
-};
-
-/**
- * Mock weather data for development/testing
- * Returns realistic weather data for testing without API key
- * 
- * @returns {Object} - Mock weather object
- */
-const getMockWeatherData = () => {
-    const temperatures = [5, 12, 18, 28, 35]; // Various temperature ranges
-    const randomTemp = temperatures[Math.floor(Math.random() * temperatures.length)];
-    const descriptions = ['Clear sky', 'Partly cloudy', 'Overcast', 'Light rain', 'Sunny'];
-    const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
-
-    return {
-        temperature: randomTemp,
-        feelsLike: randomTemp - 2,
-        humidity: Math.floor(Math.random() * 40 + 40),
-        description: randomDesc,
-        icon: '01d',
-        location: 'Mock City',
-        country: 'XX',
-        timestamp: new Date(),
-        isMocked: true
-    };
 };
 
 /**

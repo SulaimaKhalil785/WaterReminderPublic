@@ -20,7 +20,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sevincaeren.waterreminder"
+      "bundleIdentifier": "com.sevincaeren.waterreminder",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Water Reminder uses your location to provide weather-based hydration recommendations.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,14 +32,35 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.sevincaeren.waterreminder",
-      "versionCode": 2
+      "versionCode": 2,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Water Reminder uses your location to provide weather-based hydration recommendations."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#364F6B"
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "your-eas-project-id-here"
       }
     },
     "runtimeVersion": {

@@ -55,9 +55,9 @@ export const fetchWaterGoal = (dispatch, userId) => {
 }
 
 export const saveWaterGoal = (dispatch, userId, waterGoal) => {
-    setDoc(doc(firestore, `${userId}/History`), {
+    return setDoc(doc(firestore, `${userId}/History`), {
         waterGoal: waterGoal
     }).then(() => {
-        dispatch(firebaseActions.saveWaterGoal());
+        dispatch(firebaseActions.saveWaterGoal({ waterGoal: waterGoal }));
     });
 }

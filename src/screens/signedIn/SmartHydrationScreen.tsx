@@ -31,48 +31,65 @@ const SmartHydrationScreen = ({ navigation }) => {
     const [authState] = useAuthContext();
     const [firebaseState, firebaseDispatch] = useFirebaseContext();
     const [weatherState, weatherDispatch] = useWeatherContext();
-    const [isAccepting, setIsAccepting] = useState(false);
+    const [isGoalApplying, setIsGoalApplying] = useState(false);
+    const [isGoalApplied, setIsGoalApplied] = useState(false);
+
+    const isPremiumUser = Boolean(authState.user?.isPremiumUser);
+    const userId = authState.user?.uid;
 
     const currentGoal = firebaseState.waterGoal?.waterGoal || 2500;
 
     useEffect(() => {
-        refreshSmartHydrationIfNeeded(weatherState, weatherDispatch, currentGoal);
-    }, [currentGoal]);
-
-    const handleRetry = useCallback(() => {
-        fetchAndUpdateSmartHydration(weatherDispatch, currentGoal);
-    }, [weatherDispatch, currentGoal]);
-
-    const handleAccept = useCallback(async () => {
-        const recommendation = weatherState.recommendation;
-        if (!recommendation || isAccepting) {
+        if (!isPremiumUser || !userId) {
             return;
         }
 
-        setIsAccepting(true);
-        try {
-            await acceptHydrationRecommendation(
-                recommendation,
-                firebaseDispatch,
-                weatherDispatch,
-                authState.user
-            );
-
-            Alert.alert(
-                'Goal Updated!',
-                `Your daily water goal is now ${recommendation.recommendedIntake} ml.\nReminders will notify you every ${recommendation.reminderFrequency} minutes.`,
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
-        } catch (error) {
-            Alert.alert(
-                'Update Failed',
-                error?.message || 'Could not update your water goal. Please try again.',
-                [{ text: 'OK' }]
-            );
-        } finally {
-            setIsAccepting(false);
+        if (!weatherState.recommendationAccepted) {
+            refreshSmartHydrationIfNeeded(weatherState, weatherDispatch, currentGoal, { isPremiumUser });
         }
-    }, [weatherState.recommendation, isAccepting, firebaseDispatch, weatherDispatch, authState.user, navigation]);
+    }, [currentGoal, weatherState, weatherDispatch, weatherState.recommendationAccepted, isPremiumUser, userId]);
+
+    const handleRetry = useCallback(() => {
+        if (!isPremiumUser || !userId) {
+            return;
+        }
+
+        fetchAndUpdateSmartHydration(weatherDispatch, currentGoal, { isPremiumUser });
+    }, [weatherDispatch, currentGoal, isPremiumUser, userId]);
+
+    const handleAccept = useCallback(() => {
+        const recommendation = weatherState.recommendation;
+        if (!recommendation || !isPremiumUser || !userId || isGoalApplying || isGoalApplied) {
+            return;
+        }
+
+        setIsGoalApplying(true);
+        setIsGoalApplied(true);
+
+        acceptHydrationRecommendation(
+            recommendation,
+            firebaseDispatch,
+            weatherDispatch,
+            userId
+        )
+            .then(() => {
+                setIsGoalApplying(false);
+                Alert.alert(
+                    'Goal Updated!',
+                    `Your daily water goal is now ${recommendation.recommendedIntake} ml.\nReminders will notify you every ${recommendation.reminderFrequency} minutes.`,
+                    [{ text: 'OK', onPress: () => navigation.goBack() }]
+                );
+            })
+            .catch((error) => {
+                setIsGoalApplied(false);
+                setIsGoalApplying(false);
+                Alert.alert(
+                    'Update Failed',
+                    error?.message || 'Could not update your water goal. Please try again.',
+                    [{ text: 'OK' }]
+                );
+            });
+    }, [weatherState.recommendation, isGoalApplying, isGoalApplied, firebaseDispatch, weatherDispatch, userId, navigation]);
 
     const handleDismiss = useCallback(async () => {
         await dismissHydrationRecommendation(weatherDispatch);
@@ -91,18 +108,49 @@ const SmartHydrationScreen = ({ navigation }) => {
         ? Math.abs(recommendation.percentageChange) >= 20
         : false;
 
+    const isGoalAlreadyApplied = recommendation
+        ? currentGoal >= recommendation.recommendedIntake
+        : false;
+
+    const isAcceptButtonDisabled =
+        isGoalApplying ||
+        isGoalApplied ||
+        weatherState.recommendationAccepted ||
+        isGoalAlreadyApplied;
+
+    if (!isPremiumUser || !userId) {
+        return (
+            <View style={smartHydrationScreenStyle.container}>
+                <View style={smartHydrationScreenStyle.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={smartHydrationScreenStyle.backButton}>
+                        <Entypo name="chevron-thin-left" size={30} color={colorPalette.primary} />
+                    </TouchableOpacity>
+                    <Text style={smartHydrationScreenStyle.headerTitle}>Hydration Insights</Text>
+                </View>
+                <ScrollView
+                    style={smartHydrationScreenStyle.scroll}
+                    contentContainerStyle={smartHydrationScreenStyle.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={smartHydrationScreenStyle.premiumLockCard}>
+                        <Entypo name="lock" size={48} color={colorPalette.tertiary} />
+                        <Text style={smartHydrationScreenStyle.premiumLockTitle}>Premium Feature</Text>
+                        <Text style={smartHydrationScreenStyle.premiumLockText}>
+                            Smart Hydration Recommendation is available only for Premium users.
+                        </Text>
+                    </View>
+                </ScrollView>
+            </View>
+        );
+    }
+
     return (
         <View style={smartHydrationScreenStyle.container}>
             <View style={smartHydrationScreenStyle.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={smartHydrationScreenStyle.backButton}>
                     <Entypo name="chevron-thin-left" size={30} color={colorPalette.primary} />
                 </TouchableOpacity>
-                <View style={smartHydrationScreenStyle.headerTextGroup}>
-                    <Text style={smartHydrationScreenStyle.headerTitle}>Hydration Insights</Text>
-                    <View style={smartHydrationScreenStyle.premiumBadge}>
-                        <Text style={smartHydrationScreenStyle.premiumText}>PREMIUM</Text>
-                    </View>
-                </View>
+                <Text style={smartHydrationScreenStyle.headerTitle}>Hydration Insights</Text>
             </View>
 
             <ScrollView
@@ -189,24 +237,12 @@ const SmartHydrationScreen = ({ navigation }) => {
                             <Text style={smartHydrationScreenStyle.message}>{recommendation.message}</Text>
                         </View>
 
-                        {hasSignificantChange && (
+                        {hasSignificantChange && levelDetails && levelDetails.tips && (
                             <View style={smartHydrationScreenStyle.tipsCard}>
-                                <Text style={smartHydrationScreenStyle.tipsTitle}>
-                                    Tips for {levelDetails.label}
-                                </Text>
+                                <Text style={smartHydrationScreenStyle.tipsTitle}>Tips for {levelDetails.label}</Text>
                                 {levelDetails.tips.slice(0, 3).map((tip, index) => (
-                                    <Text key={index} style={smartHydrationScreenStyle.tip}>
-                                        • {tip}
-                                    </Text>
+                                    <Text key={index} style={smartHydrationScreenStyle.tip}>• {tip}</Text>
                                 ))}
-                            </View>
-                        )}
-
-                        {recommendation.isMocked && (
-                            <View style={smartHydrationScreenStyle.mockBanner}>
-                                <Text style={smartHydrationScreenStyle.mockText}>
-                                    Using mock weather data. Add your API key in app.json for live weather.
-                                </Text>
                             </View>
                         )}
 
@@ -214,7 +250,7 @@ const SmartHydrationScreen = ({ navigation }) => {
                             <TouchableOpacity
                                 style={smartHydrationScreenStyle.dismissButton}
                                 onPress={handleDismiss}
-                                disabled={isAccepting}
+                                disabled={isGoalApplying || isGoalApplied}
                             >
                                 <Text style={smartHydrationScreenStyle.dismissButtonText}>Not Now</Text>
                             </TouchableOpacity>
@@ -223,16 +259,18 @@ const SmartHydrationScreen = ({ navigation }) => {
                                 style={[
                                     smartHydrationScreenStyle.applyButton,
                                     { backgroundColor: temperatureColor },
-                                    isAccepting && smartHydrationScreenStyle.buttonDisabled,
+                                    isAcceptButtonDisabled && smartHydrationScreenStyle.buttonDisabled,
                                 ]}
                                 onPress={handleAccept}
-                                disabled={isAccepting}
+                                disabled={isAcceptButtonDisabled}
                             >
-                                {isAccepting ? (
+                                {isGoalApplying && !isGoalApplied ? (
                                     <ActivityIndicator size="small" color="#FFFFFF" />
                                 ) : (
                                     <Text style={smartHydrationScreenStyle.applyButtonText}>
-                                        Apply Recommendation
+                                        {isGoalApplied || weatherState.recommendationAccepted || isGoalAlreadyApplied
+                                            ? 'Goal Applied'
+                                            : 'Apply Recommendation'}
                                     </Text>
                                 )}
                             </TouchableOpacity>
