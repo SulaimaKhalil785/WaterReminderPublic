@@ -1,11 +1,10 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const config = getDefaultConfig(__dirname);
 
-// Exclude the .git directory from Metro's file watcher to prevent 
-// EPERM errors when Git creates temporary lock files.
-config.resolver.blockList = [
-  /.*\.git\/.*/,
-];
+config.resolver.blockList = exclusionList([
+  /.*[/\\]\.git[/\\].*/,
+]);
 
 module.exports = config;

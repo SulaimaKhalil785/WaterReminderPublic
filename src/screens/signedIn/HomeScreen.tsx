@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { Text, View, Dimensions } from 'react-native';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import ProgressCircle from 'react-native-progress/Circle';
 import { useAuthContext } from '../../context/AuthContext';
 import { useFirebaseContext } from '../../context/FirebaseContext';
 import { useWeatherContext } from '../../context/WeatherContext';
-import { Alert } from 'react-native';
 import { fetchWaterGoal, fetchWaterRecords, saveWaterRecord } from '../../util/FirebaseHelper';
 import { refreshSmartHydrationIfNeeded } from '../../util/SmartHydrationHelper';
 import { restoreHydrationReminders } from '../../util/ReminderHelper';
@@ -17,70 +17,89 @@ import { getData, storeData } from '../../util/StorageHelper';
 import moment from 'moment';
 import WaterHistoryList from '../../components/WaterHistoryList';
 
-const { width } = Dimensions.get('window');
 const circleSize = 180; 
 
 const HomeScreen = ({ navigation }) => {
     const [authState] = useAuthContext();
     const [state, dispatch] = useFirebaseContext();
     const [weatherState, weatherDispatch] = useWeatherContext();
-    const [progress, setProgress] = useState(0);
 
     const isPremiumUser = Boolean(authState.user?.isPremiumUser);
+    const userId = authState.user?.uid;
+    const waterGoal = state.waterGoal?.waterGoal || 0;
+    const today = useMemo(() => moment().format('YYYY-MM-DD'), []);
 
     useEffect(() => {
-        fetchWaterRecords(dispatch, authState.user?.uid);
-        fetchWaterGoal(dispatch, authState.user?.uid);
-        restoreHydrationReminders();
-    }, [authState.user?.uid, dispatch]);
-
-    useEffect(() => {
-        calculateCircle();
-    }, [state]);
-
-    useEffect(() => {
-        if (isPremiumUser && state.waterGoal?.waterGoal) {
-            refreshSmartHydrationIfNeeded(weatherState, weatherDispatch, state.waterGoal.waterGoal, { isPremiumUser });
+        if (!userId) {
+            return;
         }
-    }, [state.waterGoal?.waterGoal, weatherState, weatherDispatch, isPremiumUser]);
 
-    const calculateCircle = () => {
-        if (state.dailyWaterRecord == undefined || state.waterGoal == undefined) {
-            setProgress(0);
-        } else {
-            const dailyWaterSizeRecord = state.dailyWaterRecord.map(waterRecord =>
-                Number(waterRecord.data.size.substring(0, 3))
-            );
-            const waterRecord = dailyWaterSizeRecord.reduce((a, b) => a + b, 0);
-            if (waterRecord >= state.waterGoal.waterGoal) {
-                setProgress(1);
-                updateGoalHistory();
-            } else {
-                setProgress(waterRecord / state.waterGoal.waterGoal);
-            }
+        const unsubscribeRecords = fetchWaterRecords(dispatch, userId);
+        const unsubscribeGoal = fetchWaterGoal(dispatch, userId);
+        const reminderTimer = setTimeout(() => {
+            restoreHydrationReminders();
+        }, 1000);
+
+        return () => {
+            unsubscribeRecords?.();
+            unsubscribeGoal?.();
+            clearTimeout(reminderTimer);
+        };
+    }, [userId, dispatch]);
+
+    const totalWater = useMemo(() => {
+        if (!state.dailyWaterRecord) {
+            return 0;
         }
-    };
 
-    const updateGoalHistory = () => {
+        return state.dailyWaterRecord.reduce((total, waterRecord) => {
+            return total + (parseInt(waterRecord.data.size, 10) || 0);
+        }, 0);
+    }, [state.dailyWaterRecord]);
+
+    const progress = useMemo(() => {
+        if (!waterGoal) {
+            return 0;
+        }
+
+        return Math.min(totalWater / waterGoal, 1);
+    }, [totalWater, waterGoal]);
+
+    useEffect(() => {
+        if (totalWater < waterGoal) {
+            return;
+        }
+
         getData('goalHistory').then(res => {
-            const today = moment().format('YYYY-MM-DD');
             if (!res) {
                 storeData('goalHistory', JSON.stringify([today]));
             } else if (!JSON.parse(res).includes(today)) {
                 storeData('goalHistory', JSON.stringify([...JSON.parse(res), today]));
             }
         });
-    };
+    }, [today, totalWater, waterGoal]);
 
-    const openSmartHydration = () => {
-        if (!isPremiumUser) {
-            return;
+    useEffect(() => {
+        if (isPremiumUser) {
+            refreshSmartHydrationIfNeeded(weatherState, weatherDispatch, waterGoal, { isPremiumUser });
         }
+    }, [
+        isPremiumUser,
+        waterGoal,
+        weatherState.weatherData,
+        weatherState.lastUpdated,
+        weatherState.isLoading,
+        weatherDispatch
+    ]);
 
-        navigation.navigate('smartHydration');
-    };
+    const openSmartHydration = useCallback(() => {
+        if (isPremiumUser) {
+            navigation.navigate('SmartHydration');
+        }
+    }, [isPremiumUser, navigation]);
 
     return (
+        <SafeAreaView style={{ flex: 1 }}>
         <View style={homeStyle.container}>
             <Text style={commonStyle.header}>Water Reminder</Text>
 
@@ -99,6 +118,7 @@ const HomeScreen = ({ navigation }) => {
             <WaterHistoryList dailyWaterRecord={state.dailyWaterRecord} />
             <AddWaterButton dispatch={dispatch} action={saveWaterRecord} userId={authState.user?.uid} />
         </View>
+        </SafeAreaView>
     );
 };
 

@@ -10,6 +10,8 @@ import { calculateHydrationRecommendation } from './HydrationCalculator';
 import { scheduleHydrationReminders } from './ReminderHelper';
 import { saveWaterGoal } from './FirebaseHelper';
 
+let smartHydrationRequest = null;
+
 /**
  * Fetch weather and update hydration recommendation in WeatherContext
  * @param {Function} weatherDispatch - Weather context dispatch
@@ -23,17 +25,31 @@ export const fetchAndUpdateSmartHydration = async (weatherDispatch, currentGoal,
         return;
     }
 
+    if (smartHydrationRequest) {
+        return smartHydrationRequest;
+    }
+
     weatherDispatch(weatherActions.fetchWeatherStart());
 
-    try {
+    smartHydrationRequest = (async () => {
         const weatherData = await fetchWeatherForCurrentLocation();
+        if (!weatherData) {
+            throw new Error('Weather data is unavailable.');
+        }
+
         weatherDispatch(weatherActions.fetchWeatherSuccess(weatherData));
 
         const recommendation = calculateHydrationRecommendation(weatherData, currentGoal);
         weatherDispatch(weatherActions.updateRecommendation(recommendation));
+    })();
+
+    try {
+        await smartHydrationRequest;
     } catch (error) {
         console.error('Smart hydration fetch failed:', error);
         weatherDispatch(weatherActions.fetchWeatherError(error.message || 'Failed to fetch weather data'));
+    } finally {
+        smartHydrationRequest = null;
     }
 };
 
@@ -53,9 +69,15 @@ export const refreshSmartHydrationIfNeeded = (weatherState, weatherDispatch, cur
     const isStale = !weatherState.weatherData || isWeatherDataStale(weatherState.lastUpdated);
     if (isStale && !weatherState.isLoading) {
         fetchAndUpdateSmartHydration(weatherDispatch, currentGoal, options);
-    } else if (weatherState.weatherData && currentGoal) {
+    } else if (
+        weatherState.weatherData &&
+        currentGoal &&
+        weatherState.recommendation?.currentGoal !== currentGoal
+    ) {
         const recommendation = calculateHydrationRecommendation(weatherState.weatherData, currentGoal);
-        weatherDispatch(weatherActions.updateRecommendation(recommendation));
+        if (recommendation) {
+            weatherDispatch(weatherActions.updateRecommendation(recommendation));
+        }
     }
 };
 
@@ -68,7 +90,8 @@ export const refreshSmartHydrationIfNeeded = (weatherState, weatherDispatch, cur
  */
 export const acceptHydrationRecommendation = async (recommendation, firebaseDispatch, weatherDispatch, userId) => {
     if (!userId) {
-        throw new Error('You must be signed in to update your water goal.');
+        console.warn('User not signed in. Cannot update goal.');
+        return;
     }
 
     await saveWaterGoal(firebaseDispatch, userId, recommendation.recommendedIntake);

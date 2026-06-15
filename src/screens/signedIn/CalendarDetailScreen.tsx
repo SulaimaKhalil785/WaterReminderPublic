@@ -16,7 +16,11 @@ const CalendarDetailScreen = ({navigation, route}) => {
     const {date} = route.params;
 
     useEffect(() => {
-        fetchWaterRecord(dispatch, authState.user?.uid, date);
+        if (!authState.user?.uid) {
+            return;
+        }
+
+        return fetchWaterRecord(dispatch, authState.user.uid, date);
     }, [authState.user?.uid, date, dispatch]);
 
     return (

@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Entypo } from '@expo/vector-icons';
 import { useAuthContext } from '../../context/AuthContext';
 import { useFirebaseContext } from '../../context/FirebaseContext';
@@ -47,7 +48,16 @@ const SmartHydrationScreen = ({ navigation }) => {
         if (!weatherState.recommendationAccepted) {
             refreshSmartHydrationIfNeeded(weatherState, weatherDispatch, currentGoal, { isPremiumUser });
         }
-    }, [currentGoal, weatherState, weatherDispatch, weatherState.recommendationAccepted, isPremiumUser, userId]);
+    }, [
+        currentGoal,
+        weatherState.weatherData,
+        weatherState.lastUpdated,
+        weatherState.isLoading,
+        weatherState.recommendationAccepted,
+        weatherDispatch,
+        isPremiumUser,
+        userId
+    ]);
 
     const handleRetry = useCallback(() => {
         if (!isPremiumUser || !userId) {
@@ -64,7 +74,6 @@ const SmartHydrationScreen = ({ navigation }) => {
         }
 
         setIsGoalApplying(true);
-        setIsGoalApplied(true);
 
         acceptHydrationRecommendation(
             recommendation,
@@ -74,6 +83,7 @@ const SmartHydrationScreen = ({ navigation }) => {
         )
             .then(() => {
                 setIsGoalApplying(false);
+                setIsGoalApplied(true);
                 Alert.alert(
                     'Goal Updated!',
                     `Your daily water goal is now ${recommendation.recommendedIntake} ml.\nReminders will notify you every ${recommendation.reminderFrequency} minutes.`,
@@ -145,6 +155,7 @@ const SmartHydrationScreen = ({ navigation }) => {
     }
 
     return (
+        <SafeAreaView style={{ flex: 1 }}>
         <View style={smartHydrationScreenStyle.container}>
             <View style={smartHydrationScreenStyle.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={smartHydrationScreenStyle.backButton}>
@@ -261,15 +272,15 @@ const SmartHydrationScreen = ({ navigation }) => {
                                     { backgroundColor: temperatureColor },
                                     isAcceptButtonDisabled && smartHydrationScreenStyle.buttonDisabled,
                                 ]}
-                                onPress={handleAccept}
+                                onPress={() => !isAcceptButtonDisabled && handleAccept()}
                                 disabled={isAcceptButtonDisabled}
                             >
-                                {isGoalApplying && !isGoalApplied ? (
+                                {isGoalApplying ? (
                                     <ActivityIndicator size="small" color="#FFFFFF" />
                                 ) : (
                                     <Text style={smartHydrationScreenStyle.applyButtonText}>
-                                        {isGoalApplied || weatherState.recommendationAccepted || isGoalAlreadyApplied
-                                            ? 'Goal Applied'
+                                        {weatherState.recommendationAccepted || isGoalAlreadyApplied
+                                            ? 'Goal Current'
                                             : 'Apply Recommendation'}
                                     </Text>
                                 )}
@@ -279,6 +290,7 @@ const SmartHydrationScreen = ({ navigation }) => {
                 )}
             </ScrollView>
         </View>
+        </SafeAreaView>
     );
 };
 

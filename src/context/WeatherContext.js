@@ -83,6 +83,13 @@ const weatherReducer = (state, action) => {
             };
         
         case 'update_recommendation':
+            if (
+                state.recommendation?.currentGoal === action.payload?.currentGoal &&
+                state.recommendation?.temperature === action.payload?.temperature
+            ) {
+                return state;
+            }
+
             return {
                 ...state,
                 recommendation: action.payload

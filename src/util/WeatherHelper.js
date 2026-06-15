@@ -33,7 +33,8 @@ const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 export const fetchWeatherByCoordinates = async (latitude, longitude) => {
     try {
         if (!OPENWEATHER_API_KEY) {
-            throw new Error('Weather API key not configured. Please add your API key to app.json.');
+            console.warn('Weather API key not configured.');
+            return null;
         }
 
         const url = `${OPENWEATHER_BASE_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${OPENWEATHER_API_KEY}`;
@@ -111,7 +112,8 @@ export const getDeviceLocation = async () => {
 
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-        throw new Error('Location permission denied. Enable location access to get weather-based recommendations.');
+        console.warn('Location permission denied.');
+        return null;
     }
 
     const position = await Location.getCurrentPositionAsync({
@@ -153,10 +155,12 @@ const getWebLocation = () => {
 export const fetchWeatherForCurrentLocation = async () => {
     try {
         const location = await getDeviceLocation();
+        if (!location) return null;
+        
         return await fetchWeatherByCoordinates(location.latitude, location.longitude);
     } catch (error) {
         console.error('Error fetching weather for current location:', error);
-        throw error;
+        return null;
     }
 };
 

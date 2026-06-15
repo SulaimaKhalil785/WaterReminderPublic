@@ -35,42 +35,41 @@ const returnScreenOptions = (route) => {
         },
         tabBarActiveTintColor: 'tomato',
         tabBarInactiveTintColor: 'gray',
-        initialRouteName: 'home'
     }
+}
+
+const CalendarStackScreen = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="CalendarMain" component={CalendarScreen}
+                          options={{
+                              headerShown: false,
+                          }}/>
+            <Stack.Screen name="calendarDetail" component={CalendarDetailScreen}
+                          options={{
+                              headerShown: false,
+                          }}/>
+        </Stack.Navigator>
+    );
+}
+
+const HomeStackScreen = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="Home" component={HomeScreen}
+                          options={{
+                              headerShown: false,
+                          }}/>
+            <Stack.Screen name="SmartHydration" component={SmartHydrationScreen}
+                          options={{
+                              headerShown: false,
+                          }}/>
+        </Stack.Navigator>
+    );
 }
 
 export default function AppNavigationContext() {
     const [state] = useAuthContext();
-
-    const CalendarStackScreen = () => {
-        return (
-            <Stack.Navigator>
-                <Stack.Screen name="calendar" component={CalendarScreen}
-                              options={{
-                                  headerShown: false,
-                              }}/>
-                <Stack.Screen name="calendarDetail" component={CalendarDetailScreen}
-                              options={{
-                                  headerShown: false,
-                              }}/>
-            </Stack.Navigator>
-        );
-    }
-
-    const HomeStackScreen = () => {
-        return (
-            <Stack.Navigator>
-                <Stack.Screen name="Home" component={HomeScreen}
-                              options={{
-                                  headerShown: false,
-                              }}/>
-                <Stack.Screen name="smartHydration" component={SmartHydrationScreen}
-                              options={{
-                                  headerShown: false,
-                              }}/>
-            </Stack.Navigator>
-        );
-    }
 
     return (
         <NavigationContainer>

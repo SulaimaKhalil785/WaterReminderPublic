@@ -162,7 +162,7 @@ export const setWaterGoalCardStyle = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'start',
+        alignItems: 'flex-start',
         alignSelf: 'stretch',
         backgroundColor: colorPalette.secondary,
         color: colorPalette.background,
