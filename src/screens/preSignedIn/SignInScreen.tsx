@@ -12,11 +12,6 @@ const SignInScreen = ({navigation}) => {
     const [state, setState] = useState<any>({email: '', password: ''});
 
     const handleOnSignIn = () => {
-        if (!state.email || !state.password) {
-            // Basic validation to prevent unnecessary network calls
-            alert("Please enter both email and password.");
-            return;
-        }
         signIn(dispatch, state.email, state.password);
     }
 
