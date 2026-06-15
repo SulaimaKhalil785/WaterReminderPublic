@@ -12,20 +12,15 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "url": "https://u.expo.dev/cf50e54a-cf19-44b4-ac39-40340bbbc099"
+      "fallbackToCacheTimeout": 0,
+      "url": ""
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sevincaeren.waterreminder",
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Water Reminder uses your location to provide weather-based hydration recommendations.",
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
-      }
+      "bundleIdentifier": "com.sevincaeren.waterreminder"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,53 +28,18 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.sevincaeren.waterreminder",
-      "versionCode": 2,
-      "googleServicesFile": "./google-services.json",
-      "permissions": [
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "FOREGROUND_SERVICE",
-        "WAKE_LOCK",
-        "POST_NOTIFICATIONS"
-      ]
+      "versionCode": 2
     },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "extra": {
-      "weatherApiKey": "8d3997a346cd0a88f907da5a1eaacaab",
-      "firebaseApiKey": "AIzaSyDlBzflQUiEcfY76O72BpCectNJDl1ji8g",
-      "firebaseAuthDomain": "water-tracker-3f669.firebaseapp.com",
-      "firebaseProjectId": "water-tracker-3f669",
-      "firebaseStorageBucket": "water-tracker-3f669.firebasestorage.app",
-      "firebaseMessagingSenderId": "171437832444",
-      "firebaseAppIdAndroid": "1:171437832444:android:46d3f6a7119c7102223f79",
-      "firebaseAppIdWeb": "1:171437832444:web:63c8cd784fff53c6223f79",
-      "firebaseMeasurementId": "G-SGXH3F0QKC",
-      "eas": {
-        "projectId": "cf50e54a-cf19-44b4-ac39-40340bbbc099"
-      }
-    },
-    "plugins": [
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Water Reminder uses your location to provide weather-based hydration recommendations."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#364F6B"
-        }
-      ]
-    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "owner": "sulaima_khalil"
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
   }
 }
