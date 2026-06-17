@@ -37,7 +37,8 @@ export const getSuggestedReminderInterval = (temperature, currentGoal = 2500) =>
  */
 export const calculateHydrationRecommendation = (weatherData, currentGoal = 2500) => {
     if (!weatherData || weatherData.temperature === undefined) {
-        throw new Error('Invalid weather data provided');
+        console.warn('Invalid weather data provided to calculator');
+        return null;
     }
 
     const temperature = weatherData.temperature;
@@ -216,7 +217,8 @@ export const isSignificantChange = (recommendedIntake, currentGoal, threshold = 
  */
 export const calculateForecastRecommendations = (weatherForecast) => {
     if (!Array.isArray(weatherForecast)) {
-        throw new Error('Weather forecast must be an array');
+        console.warn('Weather forecast must be an array');
+        return [];
     }
 
     return weatherForecast.map((weatherData, index) => ({

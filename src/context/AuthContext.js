@@ -6,11 +6,25 @@ import {onAuthStateChanged} from "../util/AuthHelper";
 const authReducer = (state, action) => {
     switch (action.type) {
         case 'on_auth_state_change':
-            return {...state, user: action.payload};
+            if (
+                !state.isLoading &&
+                state.user?.uid === action.payload?.uid &&
+                state.user?.isPremiumUser === action.payload?.isPremiumUser
+            ) {
+                return state;
+            }
+            return {...state, user: action.payload, isLoading: false, errorMsg: ''};
         case 'sign_in':
-            return {...state, user: action.payload};
+            if (
+                !state.isLoading &&
+                state.user?.uid === action.payload?.uid &&
+                state.user?.isPremiumUser === action.payload?.isPremiumUser
+            ) {
+                return state;
+            }
+            return {...state, user: action.payload, isLoading: false, errorMsg: ''};
         case 'sign_up':
-            return {...state, user: action.payload};
+            return {...state, user: action.payload, isLoading: false, errorMsg: ''};
         case 'sign_out':
             return {...state, user: false, isLoading: false};
         case 'throw_error':
@@ -33,7 +47,7 @@ const AuthProvider = ({children}) => {
     const [state, dispatch] = useReducer(authReducer, initialState);
 
     useEffect(() => {
-        onAuthStateChanged(dispatch);
+        return onAuthStateChanged(dispatch);
     }, []);
 
     return (

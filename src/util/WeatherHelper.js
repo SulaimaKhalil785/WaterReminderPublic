@@ -28,8 +28,8 @@ const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 export const fetchWeatherByCoordinates = async (latitude, longitude) => {
     try {
         if (!OPENWEATHER_API_KEY) {
-            console.warn('Weather API key not configured. Using mock data.');
-            return getMockWeatherData();
+            console.warn('Weather API key not configured.');
+            return null;
         }
 
         const url = `${OPENWEATHER_BASE_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${OPENWEATHER_API_KEY}`;

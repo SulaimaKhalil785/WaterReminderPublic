@@ -94,15 +94,25 @@ export const restoreHydrationReminders = async () => {
         return;
     }
 
-    const enabled = await getData(REMINDER_ENABLED_KEY);
+    const [enabled, interval] = await Promise.all([
+        getData(REMINDER_ENABLED_KEY),
+        getData(REMINDER_INTERVAL_KEY)
+    ]);
+
     if (enabled !== 'true') {
         return;
     }
 
-    const interval = await getData(REMINDER_INTERVAL_KEY);
-    if (interval) {
-        await scheduleHydrationReminders(Number(interval));
+    if (!interval) {
+        return;
     }
+
+    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    if (scheduledNotifications.length > 0) {
+        return;
+    }
+
+    await scheduleHydrationReminders(Number(interval));
 };
 
 /**

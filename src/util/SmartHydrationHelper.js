@@ -30,18 +30,36 @@ const recommendationsMatch = (currentRec, newRec) => {
  * Fetch weather and update hydration recommendation in WeatherContext
  */
 export const fetchAndUpdateSmartHydration = async (weatherDispatch, currentGoal, options = {}) => {
+    if (!options.isPremiumUser) {
+        return;
+    }
+
+    if (smartHydrationRequest) {
+        return smartHydrationRequest;
+    }
+
     weatherDispatch(weatherActions.fetchWeatherStart());
 
-    try {
+    smartHydrationRequest = (async () => {
         const weatherData = await fetchWeatherForCurrentLocation();
+        if (!weatherData) {
+            throw new Error('Weather data is unavailable.');
+        }
+
         weatherDispatch(weatherActions.fetchWeatherSuccess(weatherData));
 
         const normalizedGoal = normalizeGoal(currentGoal);
         const recommendation = calculateHydrationRecommendation(weatherData, normalizedGoal);
         weatherDispatch(weatherActions.updateRecommendation(recommendation));
+    })();
+
+    try {
+        await smartHydrationRequest;
     } catch (error) {
         console.error('Smart hydration fetch failed:', error);
         weatherDispatch(weatherActions.fetchWeatherError(error.message || 'Failed to fetch weather data'));
+    } finally {
+        smartHydrationRequest = null;
     }
 };
 
@@ -75,17 +93,16 @@ export const refreshSmartHydrationIfNeeded = (weatherState, weatherDispatch, cur
  */
 export const acceptHydrationRecommendation = async (recommendation, firebaseDispatch, weatherDispatch, userId) => {
     if (!userId) {
-        throw new Error('You must be signed in to update your water goal.');
+        console.warn('User not signed in. Cannot update goal.');
+        return;
     }
 
     await saveWaterGoal(firebaseDispatch, userId, recommendation.recommendedIntake);
     weatherDispatch(weatherActions.acceptRecommendation(recommendation));
 
-    try {
-        await scheduleHydrationReminders(recommendation.reminderFrequency);
-    } catch (error) {
+    scheduleHydrationReminders(recommendation.reminderFrequency).catch((error) => {
         console.warn('Reminder scheduling failed, goal was still updated:', error);
-    }
+    });
 };
 
 /**

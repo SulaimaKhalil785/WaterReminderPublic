@@ -1,20 +1,20 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import { useEffect, useState } from 'react';
+import { Text, View, TouchableOpacity } from 'react-native';
 import ProgressCircle from 'react-native-progress/Circle';
-import {Ionicons} from "@expo/vector-icons";
-import {useNavigation} from "@react-navigation/native";
-import {useAuthContext} from "../../context/AuthContext";
-import {useFirebaseContext} from "../../context/FirebaseContext";
-import {useWeatherContext} from "../../context/WeatherContext";
-import {fetchWaterGoal, fetchWaterRecords, saveWaterRecord} from "../../util/FirebaseHelper";
-import {refreshSmartHydrationIfNeeded} from "../../util/SmartHydrationHelper";
-import {isWeatherDataStale} from "../../util/WeatherHelper";
-import {getHydrationLevelDetails} from "../../util/HydrationCalculator";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { useAuthContext } from "../../context/AuthContext";
+import { useFirebaseContext } from "../../context/FirebaseContext";
+import { useWeatherContext } from "../../context/WeatherContext";
+import { fetchWaterGoal, fetchWaterRecords, saveWaterRecord } from "../../util/FirebaseHelper";
+import { refreshSmartHydrationIfNeeded } from "../../util/SmartHydrationHelper";
+import { isWeatherDataStale } from "../../util/WeatherHelper";
+import { getHydrationLevelDetails } from "../../util/HydrationCalculator";
 import AddWaterButton from "../../components/AddWaterButton";
-import {colorPalette} from "../../constants/color";
-import {commonStyle, homeStyle, smartHydrationSummaryStyle} from "../../styles/styles";
-import {getData, storeData} from "../../util/StorageHelper";
+import { colorPalette } from "../../constants/color";
+import { commonStyle, homeStyle, smartHydrationSummaryStyle } from "../../styles/styles";
+import { getData, storeData } from "../../util/StorageHelper";
 import moment from "moment";
 import WaterHistoryList from "../../components/WaterHistoryList";
 
@@ -152,27 +152,30 @@ const HomeScreen = () => {
     }
 
     return (
-        <View style={homeStyle.container}>
-            <Text style={commonStyle.header}>
-                Water Reminder
-            </Text>
+        <SafeAreaView style={{ flex: 1 }}>
+            <View style={homeStyle.container}>
+                <Text style={commonStyle.header}>
+                    Water Reminder
+                </Text>
 
-            <View style={homeStyle.progress}>
-                <ProgressCircle
-                    size={200}
-                    progress={progress}
-                    showsText
-                    color={colorPalette.primary}
-                    thickness={12}
-                />
+                <View style={homeStyle.progress}>
+                    <ProgressCircle
+                        size={200}
+                        progress={progress}
+                        showsText
+                        color={colorPalette.primary}
+                        thickness={12}
+                    />
+                </View>
+
+                {renderSmartHydrationCard()}
+
+                <WaterHistoryList dailyWaterRecord={state.dailyWaterRecord} />
+                <AddWaterButton dispatch={dispatch} action={saveWaterRecord} userId={userId} />
             </View>
-
-            {renderSmartHydrationCard()}
-
-            <WaterHistoryList dailyWaterRecord={state.dailyWaterRecord}/>
-            <AddWaterButton dispatch={dispatch} action={saveWaterRecord} userId={userId}/>
-        </View>
+        </SafeAreaView>
     );
-}
+};
 
 export default HomeScreen;
+

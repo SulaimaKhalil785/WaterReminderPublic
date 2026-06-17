@@ -1,7 +1,7 @@
-import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
-import {auth} from "../../firebaseConfig";
-import {storeData} from "./StorageHelper";
-import {authActions} from "../constants/authActions";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
+import { storeData } from "./StorageHelper";
+import { authActions } from "../constants/authActions";
 
 const getPremiumStatus = async (user) => {
     // Dummy Premium Credentials for testing
@@ -32,8 +32,14 @@ const dispatchAuthUser = async (dispatch, action, user) => {
 };
 
 export const onAuthStateChanged = (dispatch) => {
-    auth.onAuthStateChanged((user) => {
+    if (!auth) {
+        dispatch(authActions.signOut());
+        return () => { };
+    }
+
+    return auth.onAuthStateChanged((user) => {
         if (user) {
+            dispatchAuthUser(dispatch, authActions.onAuthStateChange, user);
             dispatchAuthUser(dispatch, authActions.onAuthStateChange, user);
         } else {
             storeData('uid', '').then(() => {

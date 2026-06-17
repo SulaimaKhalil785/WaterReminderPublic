@@ -40,12 +40,18 @@ const firebaseReducer = (state, action) => {
         case 'save_daily_water_goals':
             return {...state, goalHistory: action.payload};
         case 'fetch_water_records':
+            if (state.dailyWaterRecord === action.payload) {
+                return state;
+            }
             return {...state, dailyWaterRecord: action.payload};
-        case 'save_water_record':
+        case 'save_water_records':
             return {...state};
         case 'fetch_water_record':
             return {...state, waterRecord: action.payload};
         case 'fetch_water_goal':
+            if (state.waterGoal?.waterGoal === action.payload?.waterGoal) {
+                return state;
+            }
             return {...state, waterGoal: action.payload};
         case 'save_water_goal':
             return {...state, waterGoal: action.payload};
@@ -54,7 +60,11 @@ const firebaseReducer = (state, action) => {
     }
 }
 
-const initialState = {};
+const initialState = {
+    dailyWaterRecord: [],
+    waterGoal: {waterGoal: 2500},
+    waterRecord: []
+};
 
 const FirebaseContext = createContext(undefined);
 const FirebaseDispatchContext = createContext(undefined);
