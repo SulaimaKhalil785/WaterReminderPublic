@@ -12,31 +12,26 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": ""
+      "enabled": false,
+      "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sevincaeren.waterreminder"
+      "bundleIdentifier": "com.waterreminder.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.sevincaeren.waterreminder",
+      "package": "com.waterreminder.app",
       "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": ""
-      }
     },
     "runtimeVersion": {
       "policy": "sdkVersion"

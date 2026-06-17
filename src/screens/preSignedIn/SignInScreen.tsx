@@ -55,7 +55,7 @@ const SignInScreen = ({navigation}) => {
                             <Text style={signInStyle.signInText}>Sign In</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleOnSignUp}>
-                            <Text style={signInStyle.signInText}>Dont have an account ? Sign Up</Text>
+                            <Text style={signInStyle.signInText}>Don't have an account ? Sign Up</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

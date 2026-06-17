@@ -20,11 +20,18 @@ const CalendarScreen = ({navigation}) => {
     const getGoalHistory = () => {
         getData("goalHistory").then(res => {
             if (res) {
-                const tempGoalHistory = JSON.parse(res as string).reduce((acc, curr) => (acc[curr] = {
-                    selected: true,
-                    selectedColor: colorPalette.primary
-                }, acc), {});
-                setGoalHistory(tempGoalHistory);
+                try {
+                    const parsed = JSON.parse(res as string);
+                    if (Array.isArray(parsed)) {
+                        const tempGoalHistory = parsed.reduce((acc, curr) => (acc[curr] = {
+                            selected: true,
+                            selectedColor: colorPalette.primary
+                        }, acc), {});
+                        setGoalHistory(tempGoalHistory);
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse goalHistory:", e);
+                }
             }
         });
     }

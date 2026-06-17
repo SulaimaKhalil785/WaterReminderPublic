@@ -48,7 +48,9 @@ export const calculateHydrationRecommendation = (weatherData, currentGoal = 2500
 
     // Calculate difference from current goal
     const goalDifference = recommendedIntake - currentGoal;
-    const percentageChange = Math.round((goalDifference / currentGoal) * 100);
+    const percentageChange = currentGoal > 0
+        ? Math.round((goalDifference / currentGoal) * 100)
+        : 0;
 
     // Generate recommendation message
     const message = generateRecommendationMessage(
@@ -105,9 +107,15 @@ const generateRecommendationMessage = (temperature, hydrationLevel, recommendedI
     let baseMessage = levelMessages[hydrationLevel] || levelMessages.MODERATE;
 
     if (goalDifference > 0) {
-        baseMessage += ` We recommend increasing your goal by ${Math.abs(goalDifference)}ml (${Math.abs(Math.round((goalDifference / currentGoal) * 100))}%).`;
+        const percentChange = currentGoal > 0
+            ? Math.abs(Math.round((goalDifference / currentGoal) * 100))
+            : 100;
+        baseMessage += ` We recommend increasing your goal by ${Math.abs(goalDifference)}ml (${percentChange}%).`;
     } else if (goalDifference < 0) {
-        baseMessage += ` You can reduce your goal by ${Math.abs(goalDifference)}ml (${Math.abs(Math.round((goalDifference / currentGoal) * 100))}%).`;
+        const percentChange = currentGoal > 0
+            ? Math.abs(Math.round((goalDifference / currentGoal) * 100))
+            : 0;
+        baseMessage += ` You can reduce your goal by ${Math.abs(goalDifference)}ml (${percentChange}%).`;
     }
 
     if (humidity > 70) {
@@ -243,6 +251,6 @@ export const getHydrationProgressTarget = (recommendedIntake, targetTime = new D
     return {
         expected: expectedConsumption,
         percentage: Math.round(expectedPercentage),
-        message: `By ${targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, you should have consumed about ${expectedConsumption}ml (${Math.round(expectedPercentage)}% of your daily goal).`
+        message: `By ${targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, you should have consumed ${expectedConsumption}ml.`
     };
 };

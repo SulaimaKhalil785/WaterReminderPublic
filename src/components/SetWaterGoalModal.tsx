@@ -1,4 +1,4 @@
-import {Modal, Pressable, Text, TextInput, View} from "react-native";
+import {Alert, Modal, Pressable, Text, TextInput, View} from "react-native";
 import * as React from "react";
 import {useEffect, useState} from "react";
 import {setWaterGoalModalStyle} from "../styles/styles";
@@ -7,26 +7,34 @@ import {useFirebaseContext} from "../context/FirebaseContext";
 import {saveWaterGoal} from "../util/FirebaseHelper";
 
 const SetWaterGoalModal = ({oldWaterGoal, modalVisible, action}) => {
-    const [authState,] = useAuthContext();
-    const [dispatch] = useFirebaseContext();
+    const [authState] = useAuthContext();
+    const [, dispatch] = useFirebaseContext();
     const [waterGoal, setWaterGoal] = useState<any>('');
+    const userId = authState.user?.uid;
 
     useEffect(() => {
-        setWaterGoal(oldWaterGoal);
-    }, []);
+        setWaterGoal(oldWaterGoal ?? '');
+    }, [oldWaterGoal]);
 
     const submitWaterGoal = () => {
-        if (isNaN(waterGoal)) {
-            alert("Must input numbers");
+        const numericGoal = Number(waterGoal);
+
+        if (!userId) {
+            Alert.alert("Error", "You must be signed in");
+            return false;
+        }
+
+        if (Number.isNaN(numericGoal)) {
+            Alert.alert("Error", "Must input numbers");
             return false;
         } else {
-            saveWaterGoal(dispatch, authState.user, waterGoal);
+            saveWaterGoal(dispatch, userId, numericGoal);
             action();
         }
     }
 
     const isPressable = () => {
-        return isNaN(waterGoal);
+        return Number.isNaN(Number(waterGoal));
     }
 
     return (
@@ -45,7 +53,7 @@ const SetWaterGoalModal = ({oldWaterGoal, modalVisible, action}) => {
                         onChangeText={value => setWaterGoal(value)}
                         keyboardType="number-pad"
                         autoFocus={true}
-                        defaultValue={waterGoal}
+                        value={String(waterGoal)}
                     />
                     <Pressable
                         style={!isPressable() ? setWaterGoalModalStyle.button : setWaterGoalModalStyle.disabledButton}

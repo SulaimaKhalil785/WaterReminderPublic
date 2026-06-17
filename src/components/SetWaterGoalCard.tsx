@@ -11,7 +11,7 @@ const SetWaterGoalCard = ({action, waterGoal}) => {
                 <Text style={setWaterGoalCardStyle.title}>{waterGoal}ml</Text>
                 <Text style={setWaterGoalCardStyle.text}>Your daily goal</Text>
             </View>
-            <Entypo name="chevron-thin-right" size={30} color={colorPalette.background}/>
+            <Entypo name="chevron-thin-right" size={24} color={colorPalette.background}/>
         </TouchableOpacity>
     )
 }

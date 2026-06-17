@@ -14,10 +14,16 @@ const CalendarDetailScreen = ({navigation, route}) => {
     const [authState] = useAuthContext();
     const [state, dispatch] = useFirebaseContext();
     const {date} = route.params;
+    const userId = authState.user?.uid;
 
     useEffect(() => {
-        fetchWaterRecord(dispatch, authState.user, date);
-    }, []);
+        if (!userId) {
+            return;
+        }
+
+        const unsubscribe = fetchWaterRecord(dispatch, userId, date);
+        return unsubscribe;
+    }, [dispatch, userId, date]);
 
     return (
         <View style={settingsStyle.container}>

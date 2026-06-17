@@ -9,6 +9,7 @@ import HomeScreen from "./screens/signedIn/HomeScreen";
 import SettingsScreen from "./screens/signedIn/SettingsScreen";
 import SignInScreen from "./screens/preSignedIn/SignInScreen";
 import SignUpScreen from "./screens/preSignedIn/SignUpScreen";
+import SmartHydrationScreen from "./screens/signedIn/SmartHydrationScreen";
 import CalendarScreen from "./screens/signedIn/CalendarScreen";
 import CalendarDetailScreen from "./screens/signedIn/CalendarDetailScreen";
 
@@ -52,6 +53,10 @@ export default function AppNavigationContext() {
                               options={{
                                   headerShown: false,
                               }}/>
+                <Stack.Screen name="smartHydration" component={SmartHydrationScreen}
+                              options={{
+                                  headerShown: false,
+                              }}/>
             </Stack.Navigator>
         );
     }
@@ -65,7 +70,14 @@ export default function AppNavigationContext() {
                                     options={{
                                         headerShown: false,
                                         tabBarShowLabel: false,
-                                    }}/>
+                                        unmountOnBlur: true,
+                                    }}
+                                    listeners={({navigation}) => ({
+                                        tabPress: (event) => {
+                                            event.preventDefault();
+                                            navigation.navigate('calendar', {screen: 'calendar'});
+                                        },
+                                    })}/>
                         <Tab.Screen name="home" component={HomeScreen}
                                     options={{
                                         headerShown: false,
