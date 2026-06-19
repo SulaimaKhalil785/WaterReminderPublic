@@ -10,7 +10,7 @@ const SignOutCard = ({action}) => {
             <View style={signOffCardStyle.cardInfo}>
                 <Text style={signOffCardStyle.title}>Sign Out</Text>
             </View>
-            <Entypo name="chevron-thin-right" size={30} color={colorPalette.background}/>
+            <Entypo name="chevron-thin-right" size={24} color={colorPalette.background}/>
         </TouchableOpacity>
     )
 }

@@ -1,15 +1,16 @@
-import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
-import {auth} from "../../firebaseConfig";
-import {storeData} from "./StorageHelper";
-import {authActions} from "../constants/authActions";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
+import { storeData } from "./StorageHelper";
+import { authActions } from "../constants/authActions";
 
 export const onAuthStateChanged = (dispatch) => {
     auth.onAuthStateChanged((user) => {
         if (user) {
-            const uid = user.uid;
-            storeData('uid', uid).then(() => {
-                dispatch(authActions.onAuthStateChange(uid));
-            });
+            // Check for dummy premium user
+            if (user.email === 'premium@test.com') {
+                user.isPremiumUser = true;
+            }
+            dispatch(authActions.onAuthStateChange(user));
         } else {
             dispatch(authActions.signOut());
         }
@@ -18,8 +19,12 @@ export const onAuthStateChanged = (dispatch) => {
 
 export const signIn = (dispatch, email, password) => {
     signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
-        storeData('uid', userCredential.user.uid).then(() => {
-            dispatch(authActions.signIn(userCredential.user.uid));
+        const user = userCredential.user;
+        if (user.email === 'premium@test.com') {
+            user.isPremiumUser = true;
+        }
+        storeData('uid', user.uid).then(() => {
+            dispatch(authActions.signIn(user));
         });
     }).catch((err) => {
         dispatch(authActions.throwError(err.message));
@@ -28,8 +33,12 @@ export const signIn = (dispatch, email, password) => {
 
 export const signUp = (dispatch, email, password) => {
     createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-        storeData('uid', userCredential.user.uid).then(() => {
-            dispatch(authActions.signUp(userCredential.user.uid));
+        const user = userCredential.user;
+        if (user.email === 'premium@test.com') {
+            user.isPremiumUser = true;
+        }
+        storeData('uid', user.uid).then(() => {
+            dispatch(authActions.signUp(user));
         });
     }).catch((err) => {
         dispatch(authActions.throwError(err.message));
