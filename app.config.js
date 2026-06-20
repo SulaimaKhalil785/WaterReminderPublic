@@ -16,15 +16,38 @@ const loadDotEnv = () => {
 
 const { withMainActivity } = require('@expo/config-plugins');
 
+/**
+ * Robust Native Plugin to disable FLAG_SECURE
+ */
 const withDisableRootSecurity = (config) => {
   return withMainActivity(config, (config) => {
     let contents = config.modResults.contents;
+
+    // 1. Ensure WindowManager is imported
     if (!contents.includes('import android.view.WindowManager;')) {
-      contents = contents.replace('import android.os.Bundle;', 'import android.os.Bundle;\nimport android.view.WindowManager;');
+      contents = contents.replace(
+        /import\s+android\.os\.Bundle;/,
+        'import android.os.Bundle;\nimport android.view.WindowManager;'
+      );
     }
-    if (!contents.includes('WindowManager.LayoutParams.FLAG_SECURE')) {
-      contents = contents.replace('super.onCreate(null);', 'super.onCreate(null);\n    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);');
+
+    // 2. Clear flags in onCreate (flexible regex)
+    const onCreateRegex = /super\.onCreate\((?:null|savedInstanceState)\);/;
+    if (onCreateRegex.test(contents) && !contents.includes('WindowManager.LayoutParams.FLAG_SECURE')) {
+      contents = contents.replace(
+        onCreateRegex,
+        '$&\n    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);'
+      );
     }
+
+    // 3. Force clear in onResume to override any library re-locking
+    if (!contents.includes('protected void onResume()')) {
+      contents = contents.replace(
+        '  public static class MainActivityDelegate',
+        '@Override\n  protected void onResume() {\n    super.onResume();\n    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);\n  }\n\n  public static class MainActivityDelegate'
+      );
+    }
+
     config.modResults.contents = contents;
     return config;
   });
