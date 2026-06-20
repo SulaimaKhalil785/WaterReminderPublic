@@ -26,7 +26,6 @@ web-build/
 # Environment variables (API Keys, etc.)
 .env
 .env.*
-google-services.json
 
 # macOS
 .DS_Store

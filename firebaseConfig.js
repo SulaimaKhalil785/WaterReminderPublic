@@ -1,52 +1,31 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { Platform, LogBox } from "react-native";
+import { Platform } from "react-native";
 import Constants from "expo-constants";
 
-const firebaseExtra = Constants.expoConfig?.extra?.firebase || {};
-
-const getEnv = (key) => {
-  // Safe environment variable access for both Web and Mobile
-  try {
-    const env = (typeof window !== 'undefined' ? window : global)?.process?.env;
-    if (env && env[key]) {
-      return env[key];
-    }
-  } catch (e) {
-    // Ignore
-  }
-  return '';
-};
+// Prioritize config from expo-constants (EAS) then process.env
+const extra = Constants.expoConfig?.extra?.firebase || {};
 
 const firebaseConfig = {
-  apiKey: firebaseExtra.apiKey || getEnv('FIREBASE_API_KEY'),
-  authDomain: firebaseExtra.authDomain || getEnv('FIREBASE_AUTH_DOMAIN'),
-  projectId: firebaseExtra.projectId || getEnv('FIREBASE_PROJECT_ID'),
-  storageBucket: firebaseExtra.storageBucket || getEnv('FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: firebaseExtra.messagingSenderId || getEnv('FIREBASE_MESSAGING_SENDER_ID'),
-  appId: Platform.select({
-    android: firebaseExtra.androidAppId || getEnv('FIREBASE_ANDROID_APP_ID'),
-    default: firebaseExtra.webAppId || getEnv('FIREBASE_WEB_APP_ID')
-  }),
-  measurementId: firebaseExtra.measurementId || getEnv('FIREBASE_MEASUREMENT_ID')
+  // Use Android-specific API Key for Android, and Web API Key for everything else (Web/iOS)
+  apiKey: Platform.OS === 'android'
+    ? (extra.androidApiKey || process.env.FIREBASE_ANDROID_API_KEY)
+    : (extra.webApiKey || process.env.FIREBASE_WEB_API_KEY),
+
+  authDomain: extra.authDomain || process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: extra.projectId || process.env.FIREBASE_PROJECT_ID,
+  storageBucket: extra.storageBucket || process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: extra.messagingSenderId || process.env.FIREBASE_MESSAGING_SENDER_ID,
+
+  appId: Platform.OS === 'android'
+    ? (extra.androidAppId || process.env.FIREBASE_ANDROID_APP_ID)
+    : (extra.webAppId || process.env.FIREBASE_WEB_APP_ID),
+
+  measurementId: extra.measurementId || process.env.FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Analytics safely (Web only for JS SDK, or handled via Expo)
-let analyticsInstance = null;
-try {
-  if (Platform.OS === 'web') {
-    analyticsInstance = getAnalytics(app);
-  }
-} catch (e) {
-  console.warn("Firebase Analytics initialization failed:", e);
-}
-
-export const analytics = analyticsInstance;
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
