@@ -3,65 +3,62 @@ const path = require('path');
 
 const loadDotEnv = () => {
   const envPath = path.join(__dirname, '.env');
-
-  if (!fs.existsSync(envPath)) {
-    return;
-  }
-
+  if (!fs.existsSync(envPath)) return;
   const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
-
   for (const line of lines) {
     const trimmed = line.trim();
-
-    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) {
-      continue;
-    }
-
-    const separatorIndex = trimmed.indexOf('=');
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const rawValue = trimmed.slice(separatorIndex + 1).trim();
-    const value = rawValue.replace(/^['"]|['"]$/g, '');
-
-    if (key && process.env[key] === undefined) {
-      process.env[key] = value;
-    }
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const [key, ...parts] = trimmed.split('=');
+    const value = parts.join('=').trim().replace(/^['"]|['"]$/g, '');
+    if (key && process.env[key] === undefined) process.env[key] = value;
   }
 };
 
-const compactObject = (value) =>
-  Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== ''));
+const { withMainActivity } = require('@expo/config-plugins');
+
+const withDisableRootSecurity = (config) => {
+  return withMainActivity(config, (config) => {
+    let contents = config.modResults.contents;
+    if (!contents.includes('import android.view.WindowManager;')) {
+      contents = contents.replace('import android.os.Bundle;', 'import android.os.Bundle;\nimport android.view.WindowManager;');
+    }
+    if (!contents.includes('WindowManager.LayoutParams.FLAG_SECURE')) {
+      contents = contents.replace('super.onCreate(null);', 'super.onCreate(null);\n    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);');
+    }
+    config.modResults.contents = contents;
+    return config;
+  });
+};
 
 module.exports = ({ config }) => {
   loadDotEnv();
 
-  const easProjectId = process.env.EAS_PROJECT_ID;
-  const bundleIdentifier = process.env.APP_BUNDLE_IDENTIFIER || config.ios?.bundleIdentifier;
-  const androidPackage = process.env.APP_ANDROID_PACKAGE || config.android?.package;
+  const firebaseConfig = {
+    androidApiKey: process.env.FIREBASE_ANDROID_API_KEY,
+    webApiKey: process.env.FIREBASE_WEB_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    androidAppId: process.env.FIREBASE_ANDROID_APP_ID,
+    webAppId: process.env.FIREBASE_WEB_APP_ID,
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID
+  };
 
-  return {
+  const finalConfig = {
     ...config,
-    ios: {
-      ...config.ios,
-      bundleIdentifier,
-    },
     android: {
       ...config.android,
-      package: androidPackage,
+      package: "com.sevincaeren.watertracker",
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json"
     },
-    extra: compactObject({
+    extra: {
       ...config.extra,
+      firebase: firebaseConfig,
       weatherApiKey: process.env.WEATHER_API_KEY,
-      firebase: compactObject({
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        androidAppId: process.env.FIREBASE_ANDROID_APP_ID,
-        webAppId: process.env.FIREBASE_WEB_APP_ID,
-        measurementId: process.env.FIREBASE_MEASUREMENT_ID,
-      }),
-      eas: easProjectId ? { projectId: easProjectId } : undefined,
-    }),
+      eas: { projectId: "3816df4e-f58e-4e47-8f77-4cc96ab4334a" }
+    },
   };
+
+  return withDisableRootSecurity(finalConfig);
 };
