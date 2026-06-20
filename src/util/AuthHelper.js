@@ -75,3 +75,12 @@ export const signUp = (dispatch, email = '', password = '') => {
         dispatch(authActions.throwError(err.message));
     });
 }
+
+export const signOut = (dispatch) => {
+    auth.signOut().then(() => {
+        dispatch(authActions.signOut());
+    }).catch(() => {
+        // Even if firebase fails, we force sign out locally
+        dispatch(authActions.signOut());
+    });
+}

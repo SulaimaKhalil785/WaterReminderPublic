@@ -8,13 +8,13 @@ import SignOutModal from "../../components/SignOutModal";
 import {fetchWaterGoal} from "../../util/FirebaseHelper";
 import {useAuthContext} from "../../context/AuthContext";
 import {useFirebaseContext} from "../../context/FirebaseContext";
-import {auth} from "../../../firebaseConfig";
+import {signOut} from "../../util/AuthHelper";
 import SignOutCard from "../../components/SignOutCard";
 import {colorPalette} from "../../constants/color";
 import {Ionicons} from "@expo/vector-icons";
 
-const SettingsScreen = () => {
-    const [authState] = useAuthContext();
+const SettingsScreen = ({ navigation }) => {
+    const [authState, authDispatch] = useAuthContext();
     const [state, dispatch] = useFirebaseContext();
     const [modalVisible, setModalVisible] = useState(false);
     const [signOutModalVisible, setSignOutModalVisible] = useState(false);
@@ -29,6 +29,11 @@ const SettingsScreen = () => {
 
     const submitWaterGoal = () => {
         setModalVisible(false);
+    }
+
+    const handleSignOut = () => {
+        setSignOutModalVisible(false);
+        signOut(authDispatch);
     }
 
     const renderPremiumCard = () => {
@@ -90,7 +95,7 @@ const SettingsScreen = () => {
             <SignOutModal
                 visible={signOutModalVisible}
                 onClose={() => setSignOutModalVisible(false)}
-                onConfirm={() => auth.signOut()}
+                onConfirm={handleSignOut}
             />
         </View>
     );
@@ -104,7 +109,7 @@ const localStyles = StyleSheet.create({
         padding: 16,
         marginHorizontal: 18,
         borderRadius: 16,
-        marginBottom: 6,
+        marginBottom: 8,
         minHeight: 80,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
