@@ -21,7 +21,7 @@ import {
  * @param {number} currentGoal - Current goal in ml
  * @returns {number} - Reminder interval in minutes
  */
-export const getSuggestedReminderInterval = (temperature, currentGoal = 2500) => {
+export const getSuggestedReminderInterval = (temperature, currentGoal = 0) => {
     const reminderFrequency = getReminderFrequency(temperature);
     if (currentGoal > 3000) {
         return Math.max(reminderFrequency - 10, 15);
@@ -35,7 +35,7 @@ export const getSuggestedReminderInterval = (temperature, currentGoal = 2500) =>
  * @param {number} currentGoal - User's current water goal in ml (optional)
  * @returns {Object} - Recommendation object with all details
  */
-export const calculateHydrationRecommendation = (weatherData, currentGoal = 2500) => {
+export const calculateHydrationRecommendation = (weatherData, currentGoal = 0) => {
     if (!weatherData || weatherData.temperature === undefined) {
         console.warn('Invalid weather data provided to calculator');
         return null;

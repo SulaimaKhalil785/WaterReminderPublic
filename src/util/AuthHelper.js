@@ -1,16 +1,38 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, firestore } from "../../firebaseConfig";
 import { storeData } from "./StorageHelper";
 import { authActions } from "../constants/authActions";
 
+/**
+ * Fetch extended user profile from Firestore (isPremium, etc.)
+ */
+const fetchUserProfile = async (user) => {
+    if (!user) return null;
+    try {
+        const userDoc = await getDoc(doc(firestore, "users", user.uid));
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            // Standardize premium property name for the app
+            return {
+                ...user,
+                ...userData,
+                uid: user.uid,
+                isPremiumUser: Boolean(userData.isPremium || userData.ispremium)
+            };
+        }
+        return { ...user, isPremiumUser: false };
+    } catch (e) {
+        console.warn("Error fetching user profile:", e);
+        return { ...user, isPremiumUser: false };
+    }
+};
+
 export const onAuthStateChanged = (dispatch) => {
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
-            // Check for dummy premium user
-            if (user.email === 'premium@test.com') {
-                user.isPremiumUser = true;
-            }
-            dispatch(authActions.onAuthStateChange(user));
+            const fullUser = await fetchUserProfile(user);
+            dispatch(authActions.onAuthStateChange(fullUser));
         } else {
             dispatch(authActions.signOut());
         }
@@ -18,7 +40,6 @@ export const onAuthStateChanged = (dispatch) => {
 }
 
 export const signIn = (dispatch, email = '', password = '') => {
-    // Clean the input to prevent "invalid-email" errors from trailing spaces
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
@@ -27,35 +48,16 @@ export const signIn = (dispatch, email = '', password = '') => {
         return;
     }
 
-    // 1. Bypass Firebase for Dummy Premium Credentials
-    if (cleanEmail === 'premium@test.com' && cleanPassword === 'premium123') {
-        const dummyUser = {
-            uid: 'dummy-premium-uid-123',
-            email: 'premium@test.com',
-            isPremiumUser: true
-        };
-        storeData('uid', dummyUser.uid).then(() => {
-            dispatch(authActions.signIn(dummyUser));
-        });
-        return;
-    }
-
-    // 2. Regular Firebase Login
-    signInWithEmailAndPassword(auth, cleanEmail, cleanPassword).then((userCredential) => {
-        const user = userCredential.user;
-        if (user.email === 'premium@test.com') {
-            user.isPremiumUser = true;
-        }
-        storeData('uid', user.uid).then(() => {
-            dispatch(authActions.signIn(user));
+    signInWithEmailAndPassword(auth, cleanEmail, cleanPassword).then(async (userCredential) => {
+        const fullUser = await fetchUserProfile(userCredential.user);
+        storeData('uid', fullUser.uid).then(() => {
+            dispatch(authActions.signIn(fullUser));
         });
     }).catch((err) => {
-        // Map common errors to friendly messages
         let message = err.message;
-        if (err.code === 'auth/invalid-email') message = "The email address is badly formatted.";
-        if (err.code === 'auth/user-not-found') message = "No user found with this email.";
+        if (err.code === 'auth/invalid-email') message = "Invalid email format.";
+        if (err.code === 'auth/user-not-found') message = "User not found.";
         if (err.code === 'auth/wrong-password') message = "Incorrect password.";
-
         dispatch(authActions.throwError(message));
     });
 }
@@ -63,13 +65,21 @@ export const signIn = (dispatch, email = '', password = '') => {
 export const signUp = (dispatch, email = '', password = '') => {
     const cleanEmail = email.trim();
 
-    createUserWithEmailAndPassword(auth, cleanEmail, password).then((userCredential) => {
+    createUserWithEmailAndPassword(auth, cleanEmail, password).then(async (userCredential) => {
         const user = userCredential.user;
-        if (user.email === 'premium@test.com') {
-            user.isPremiumUser = true;
-        }
+
+        // Create initial profile in 'users' collection
+        const initialProfile = {
+            email: cleanEmail,
+            isPremium: false,
+            createdAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(firestore, "users", user.uid), initialProfile);
+
+        const fullUser = { ...user, ...initialProfile, isPremiumUser: false };
         storeData('uid', user.uid).then(() => {
-            dispatch(authActions.signUp(user));
+            dispatch(authActions.signUp(fullUser));
         });
     }).catch((err) => {
         dispatch(authActions.throwError(err.message));
@@ -80,7 +90,6 @@ export const signOut = (dispatch) => {
     auth.signOut().then(() => {
         dispatch(authActions.signOut());
     }).catch(() => {
-        // Even if firebase fails, we force sign out locally
         dispatch(authActions.signOut());
     });
 }

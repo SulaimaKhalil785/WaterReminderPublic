@@ -1,4 +1,6 @@
-const {colorPalette} = require("./color");
+import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { colorPalette } from "./color";
 
 export const actions = [
     {
@@ -22,4 +24,11 @@ export const actions = [
         text: "500 ml",
         position: 3
     },
+    {
+        color: colorPalette.tertiary,
+        name: "manual",
+        icon: <Ionicons name="ellipsis-horizontal" size={20} color="white" />,
+        text: "Custom",
+        position: 4
+    }
 ];

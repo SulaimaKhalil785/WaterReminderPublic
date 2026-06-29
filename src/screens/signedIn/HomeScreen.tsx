@@ -6,7 +6,7 @@ import ProgressCircle from 'react-native-progress/Circle';
 import { useAuthContext } from "../../context/AuthContext";
 import { useFirebaseContext } from "../../context/FirebaseContext";
 import { useWeatherContext } from "../../context/WeatherContext";
-import { fetchWaterGoal, fetchWaterRecords, saveWaterRecord } from "../../util/FirebaseHelper";
+import { fetchWaterGoal, fetchWaterRecords, saveWaterRecord, saveGoalReached } from "../../util/FirebaseHelper";
 import AddWaterButton from "../../components/AddWaterButton";
 import CelebrationModal from "../../components/CelebrationModal";
 import { colorPalette } from "../../constants/color";
@@ -129,18 +129,18 @@ const HomeScreen = ({ navigation }) => {
     }
 
     const updateGoalHistory = () => {
+        const today = currentDate;
+
+        // 1. Save to Firebase (New Persistent way)
+        saveGoalReached(userId, today).catch(e => console.warn("Failed to save goal to firebase:", e));
+
+        // 2. Keep Local Storage for fallback/offline
         getData("goalHistory").then(res => {
-            const today = moment().format("YYYY-MM-DD");
             if (!res) {
-                const goalHistory = [
-                    today
-                ]
+                const goalHistory = [today];
                 storeData("goalHistory", JSON.stringify(goalHistory));
             } else if (!JSON.parse(res).includes(today)) {
-                const goalHistory = [
-                    ...JSON.parse(res),
-                    today
-                ]
+                const goalHistory = [...JSON.parse(res), today];
                 storeData("goalHistory", JSON.stringify(goalHistory));
             }
         });
