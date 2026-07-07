@@ -1,4 +1,4 @@
-import {ScrollView} from "react-native";
+import {View} from "react-native";
 import {homeStyle} from "../styles/styles";
 import WaterRecordItem from "./WaterRecordItem";
 import * as React from "react";
@@ -6,7 +6,7 @@ import * as React from "react";
 const WaterHistoryList = ({dailyWaterRecord}) => {
     if (dailyWaterRecord) {
         return (
-            <ScrollView style={homeStyle.list}>
+            <View style={homeStyle.list}>
                 {
                     dailyWaterRecord && dailyWaterRecord.map((waterRecord, index) => {
                         return (
@@ -14,10 +14,10 @@ const WaterHistoryList = ({dailyWaterRecord}) => {
                         )
                     })
                 }
-            </ScrollView>
+            </View>
         )
     } else {
-        return <ScrollView style={homeStyle.list}/>;
+        return <View style={homeStyle.list}/>;
     }
 }
 

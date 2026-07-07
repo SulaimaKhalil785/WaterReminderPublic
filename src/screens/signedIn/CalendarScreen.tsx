@@ -6,20 +6,39 @@ import {Calendar} from "react-native-calendars/src";
 import {colorPalette} from "../../constants/color";
 import {getData} from "../../util/StorageHelper";
 import {useIsFocused} from "@react-navigation/native";
+import {useFirebaseContext} from "../../context/FirebaseContext";
+import {useAuthContext} from "../../context/AuthContext";
+import {fetchGoalHistory} from "../../util/FirebaseHelper";
 
 const CalendarScreen = ({navigation}) => {
+    const [authState] = useAuthContext();
+    const [firebaseState, dispatch] = useFirebaseContext();
     const [goalHistory, setGoalHistory] = useState<any>([]);
     const isFocused = useIsFocused();
 
     useEffect(() => {
-        if (isFocused) {
-            getGoalHistory();
+        if (isFocused && authState.user?.uid) {
+            const unsubscribe = fetchGoalHistory(dispatch, authState.user.uid);
+            return () => unsubscribe();
         }
-    }, [isFocused]);
+    }, [isFocused, authState.user?.uid]);
 
-    const getGoalHistory = () => {
+    useEffect(() => {
+        if (firebaseState.goalHistory) {
+            const tempGoalHistory = firebaseState.goalHistory.reduce((acc, curr) => (acc[curr] = {
+                selected: true,
+                selectedColor: colorPalette.primary
+            }, acc), {});
+            setGoalHistory(tempGoalHistory);
+        } else {
+            // Fallback to local storage if firebase data hasn't arrived
+            getGoalHistoryLocal();
+        }
+    }, [firebaseState.goalHistory]);
+
+    const getGoalHistoryLocal = () => {
         getData("goalHistory").then(res => {
-            if (res) {
+            if (res && !firebaseState.goalHistory) {
                 const tempGoalHistory = JSON.parse(res as string).reduce((acc, curr) => (acc[curr] = {
                     selected: true,
                     selectedColor: colorPalette.primary
